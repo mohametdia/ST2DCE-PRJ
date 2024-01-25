@@ -16,6 +16,23 @@ pipeline {
             }
         }
 
+        // Edit pom.xml version
+        stage('Update build number in pom.xml') {
+            steps {
+                script {
+                    // Read the current pom.xml content
+                    def pomContent = readFile('pom.xml')
+
+                    // Update the version with the build number
+                    pomContent = pomContent.replaceAll('<version>0.0.1-SNAPSHOT</version>', "<version>${env.BUILD_NUMBER}-SNAPSHOT</version>")
+
+                    // Write the updated content back to the pom.xml
+                    writeFile(file: 'pom.xml', text: pomContent)
+                }
+            }
+        }
+
+
         // Create docker hub credentials id
         stage('Create credentials id') {
             steps {
@@ -31,7 +48,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("${DOCKER_REGISTRY}", DOCKER_REGISTRY_CREDENTIALS_ID) {
-                        def customImage = docker.build("${DOCKER_REGISTRY}/klea-app:${env.BUILD_NUMBER}", "Dockerfile")
+                        def customImage = docker.build("${DOCKER_REGISTRY}/klea-app:latest --build-arg=${env.BUILD_NUMBER}", "Dockerfile")
                         customImage.push()
                     }
                 }

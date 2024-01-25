@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: klea-app
+  name: klea-app-deployment
 spec:
   replicas: 1
   selector:
@@ -13,11 +13,11 @@ spec:
         app: klea-app
     spec:
       containers:
-      - name: klea-app
+      - name: klea-app-container
         image: devopsklea/klea-app:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         resources:
           limits:
             cpu: "1"

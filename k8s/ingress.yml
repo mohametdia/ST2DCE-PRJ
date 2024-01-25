@@ -5,8 +5,10 @@
 #   annotations:
 #     nginx.ingress.kubernetes.io/rewrite-target: /
 # spec:
+#   selector:
+#     app: klea-app
 #   rules:
-#   - host: your-spring-app.example.com
+#   - host: localhost
 #     http:
 #       paths:
 #       - path: /
