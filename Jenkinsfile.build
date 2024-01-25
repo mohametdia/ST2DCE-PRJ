@@ -1,11 +1,27 @@
 pipeline {
+    agent any
 
-	agent any
-	
-	stages {
-        stage('Hello') {
+    environment {
+        DOCKER_IMAGE = 'dockernexus101/app01'
+        DOCKER_CREDENTIALS_ID = 'dockernexus101'
+    }
+
+    stages {
+        stage('Build Docker Image') {
             steps {
-                echo 'Hello World'
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE}:$BUILD_NUMBER ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                        sh "docker push ${DOCKER_IMAGE}:$BUILD_NUMBER"
+                    }
+                }
             }
         }
     }
