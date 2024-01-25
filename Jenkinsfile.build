@@ -19,10 +19,11 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withDockerRegistry('', DOCKER_CREDENTIALS_ID) {
-                        sh "docker push ${DOCKER_IMAGE}:$BUILD_NUMBER"
+                    withCredentials([usernamePassword(credentialsId: 'dockernexus101', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh "docker login -u $USERNAME -p $PASSWORD"
                     }
                 }
+                sh "docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
             }
         }
     }
