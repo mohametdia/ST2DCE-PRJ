@@ -1,0 +1,35 @@
+pipeline {
+
+agent any
+
+    stage('Build Docker Image') {
+        steps {
+            script {
+                dockerImage = docker.build("ST2DCE:${env.BUILD_ID}", "-f DockerFile ./")
+            }
+        }
+    }
+
+    stage('Create development container in minikube') {
+        steps {
+            sh 'kubectl apply -f dev-deployment.yaml'
+        }
+    }
+
+    stage('Testing the application'){
+        steps {
+            sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
+        }
+    }
+
+    stage('Publishing Image on Docker Hub'){
+        steps{
+            script {
+                
+            }
+        }
+    }
+
+    stage('Creat')
+
+}
