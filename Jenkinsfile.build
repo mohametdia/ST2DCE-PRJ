@@ -19,7 +19,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
+                    docker.withDockerRegistry('', DOCKER_CREDENTIALS_ID) {
                         sh "docker push ${DOCKER_IMAGE}:$BUILD_NUMBER"
                     }
                 }
