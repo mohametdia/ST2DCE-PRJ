@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dev
-  namespace: prod-dev
+  namespace: dev
   labels:
     app: dev
 spec:
