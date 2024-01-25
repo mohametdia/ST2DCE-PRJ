@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: klea-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: klea-app
+  template:
+    metadata:
+      labels:
+        app: klea-app
+    spec:
+      containers:
+      - name: klea-app
+        image: devopsklea/klea-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+          requests:
+            cpu: "0.5"
+            memory: "256Mi"
