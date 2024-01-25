@@ -20,8 +20,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockernexus101', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                        println PASSWORD
-                        println $PASSWORD
                         sh "docker login -u $USERNAME -p $PASSWORD"
                     }
                 }
