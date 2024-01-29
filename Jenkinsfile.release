@@ -10,12 +10,12 @@ pipeline {
         stage('Build Docker Image') {
             steps {
 				script {
-					COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+					VERSION = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 				}
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:build-$COMMIT ."
+                    sh "docker build -t ${DOCKER_IMAGE}:$VERSION --build-args JAR_VERSION=$VERSION ."
                 }
-                println "💩Docker Image: ${DOCKER_IMAGE}:build-$COMMIT"
+                println "💩Docker Image: ${DOCKER_IMAGE}:$VERSION"
             }
         }
 
@@ -26,7 +26,7 @@ pipeline {
                         sh 'docker login -u $USERNAME -p $PASSWORD'
                     }
                 }
-                sh "docker push ${DOCKER_IMAGE}:build-$COMMIT"
+                sh "docker push ${DOCKER_IMAGE}:$VERSION"
             }
         }
     }
