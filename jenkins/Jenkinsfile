@@ -65,32 +65,18 @@ pipeline {
             }
         }
 
-
-        // Deploy the application to localhost Kubernetes cluster
-        stage('Deploy to Kubernetes') {
+        stage('Deploy') {
             steps {
                 script {
-                    kubeConfig = credentials("${KUBECONFIG_CREDENTIALS_ID}")
-                    kubeConfigContent = kubeConfig('config')
-                    writeFile file: 'kubeconfig', text: kubeConfigContent
-                    sh "kubectl --kubeconfig kubeconfig apply -f kubernetes/deployment.yaml --namespace=${KUBE_NAMESPACE}"
+                    withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
+                        sh "cd k8s/klea-app"
+                        sh "kubectl create namespace ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/service.yaml -n ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/deployment.yaml -n ${KUBE_NAMESPACE}"
+                    }
                 }
             }
         }
-
-        //         stage('Deploy') {
-        //     steps {
-        //         script {
-        //             withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
-        //                 sh "cd k8s"
-        //                 sh "kubectl create namespace ${KUBE_NAMESPACE}"
-        //                 sh "kubectl apply -f k8s/service.yaml -n ${KUBE_NAMESPACE}"
-        //                 sh "kubectl apply -f k8s/deployment.yaml -n ${KUBE_NAMESPACE}"
-        //                 // sh "kubectl apply -f k8s/ingress.yaml -n ${KUBE_NAMESPACE}"
-        //             }
-        //         }
-        //     }
-        // }
 
 
         // Clean up the workspace
