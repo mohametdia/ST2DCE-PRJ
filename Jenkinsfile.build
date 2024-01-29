@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'dockernexus101/app01'
-        DOCKER_CREDENTIALS_ID = 'dockernexus101'
     }
 
     stages {
@@ -20,7 +19,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
 				script {
-					withDockerRegistry(credentialsId: $DOCKER_CREDENTIALS_ID) {
+					withDockerRegistry(credentialsId: 'dockernexus101') {
 						image.push()
 					}
 				}
