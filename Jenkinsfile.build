@@ -9,10 +9,14 @@ pipeline {
     stages {
         stage('Build Docker Image') {
             steps {
+				script {
+					COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+					sh 'export BUILD_NUMBER=$COMMIT'
+				}
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:$BUILD_NUMBER ."
+                    sh "docker build -t ${DOCKER_IMAGE}:build-$COMMIT ."
                 }
-                println "💩Docker Image: ${DOCKER_IMAGE}:$BUILD_NUMBER"
+                println "💩Docker Image: ${DOCKER_IMAGE}:build-$COMMIT"
             }
         }
 
@@ -23,7 +27,7 @@ pipeline {
                         sh 'docker login -u $USERNAME -p $PASSWORD'
                     }
                 }
-                sh "docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+                sh "docker push ${DOCKER_IMAGE}:build-${env.BUILD_NUMBER}"
             }
         }
     }
