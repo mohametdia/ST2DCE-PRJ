@@ -13,7 +13,7 @@ pipeline {
 					VERSION = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 				}
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:$VERSION --build-args JAR_VERSION=$VERSION ."
+                    sh "docker build -t ${DOCKER_IMAGE}:$VERSION --build-arg JAR_VERSION=$VERSION ."
                 }
                 println "💩Docker Image: ${DOCKER_IMAGE}:$VERSION"
             }
