@@ -1,10 +1,17 @@
 def dockerImage = 'dockernexus101/app01'
 def agents = ['amd64', 'arm64']
-def generateDockerStage(arch, imgTag) {
+def generateDockerStage(arch) {
 	return {
 		stage("Build and push Docker Image for $arch") {
 			agent { label arch }
 			stages {
+				stage('Checkout') {
+					steps {
+						checkout scm
+						version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+						imgTag = "build-$version_suffix-$GIT_COMMIT"
+					}
+				}
 				stage('Build Docker Image') {
 					steps {
 						script {
@@ -25,26 +32,15 @@ def generateDockerStage(arch, imgTag) {
 		}
 	}
 }
-def parallelStageMap(imgTag) {
-	return agents.collectEntries { arch -> [arch, generateDockerStage(arch, imgTag)] }
-}
+def parallelStageMap = agents.collectEntries { arch -> [arch, generateDockerStage(arch)] }
 
 pipeline {
 	agent { label 'amd64' }
     stages {
-		stage('Git checkout') {
-			steps {
-				checkout scm
-				script {
-					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					env.IMAGE_TAG = "build-$version_suffix-$GIT_COMMIT"
-				}
-			}
-		}
         stage('Build and push Docker Image') {
 			steps {
 				script {
-					parallel parallelStageMap(env.IMAGE_TAG)
+					parallel parallelStageMap
 				}
 			}
         }
@@ -52,12 +48,14 @@ pipeline {
         stage('Build Docker manifest and push') {
             steps {
 				script {
+					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					imgTag = "build-$version_suffix-$GIT_COMMIT"
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh "docker manifest create $dockerImage:$IMAGE_TAG"
+						sh "docker manifest create $dockerImage:$imgTag"
 						agents.each { arch ->
-							sh "docker manifest annotate $dockerImage:$IMAGE_TAG $dockerImage:$IMAGE_TAG-$arch --os linux --arch $arch"
+							sh "docker manifest annotate $dockerImage:$imgTag $dockerImage:$imgTag-$arch --os linux --arch $arch"
 						}
-						sh "docker manifest push $dockerImage:$env.IMAGE_TAG"
+						sh "docker manifest push $dockerImage:$imgTag"
 					}
 				}
             }
