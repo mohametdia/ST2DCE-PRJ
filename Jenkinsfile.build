@@ -25,7 +25,7 @@ def generateDockerStage(arch) {
 def parallelStageMap = agents.collectEntries { arch -> [arch, generateDockerStage(arch)] }
 
 pipeline {
-	agent { label 'amd64' }
+	agent none
     stages {
         stage('Build and push Docker Image') {
 			failFast true
@@ -37,6 +37,7 @@ pipeline {
         }
 
         stage('Build Docker manifest and push') {
+			agent { label 'amd64' }
             steps {
 				script {
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
