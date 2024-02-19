@@ -2,9 +2,8 @@ def dockerImage = 'dockernexus101/app01'
 def agents = ['amd64', 'arm64']
 def generateDockerStage(arch) {
 	return {
-		agent { label arch }
 		stage("Build Docker Image for $arch") {
-			steps {
+			node(arch) {
 				script {
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					imgTag = "build-$version_suffix-$GIT_COMMIT"
@@ -13,7 +12,7 @@ def generateDockerStage(arch) {
 			}
 		}
 		stage("Push Docker Image for $arch") {
-			steps {
+			node(arch) {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
 						image.push()
