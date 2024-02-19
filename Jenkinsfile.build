@@ -10,11 +10,11 @@ pipeline {
 			steps {
 				script {
 					checkout scm
-					branchName = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					branchName = env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					commit = env.GIT_COMMIT.take(7)
 					imgTag = ''
 					if (env.BRANCH_NAME != 'main') {
-						imgTag = "${branchName}-${commit}"
+						imgTag = "build-${branchName}-${commit}"
 					} else {
 						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 					}
