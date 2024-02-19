@@ -1,45 +1,63 @@
 dockerImage = 'dockernexus101/app01'
-def agents = ['amd64', 'arm64']
-def generateDockerStage(arch) {
-	return {
-		stage("Checkout source code for $arch") {
-			node(arch) {
+images = [:]
+
+pipeline {
+	agent { label 'amd64' }
+    stages {
+		stage('Git Checkout') {
+			steps {
 				script {
 					checkout scm
-					def version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-					def imgTag = "build-${version_suffix}-${commit}"
+					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					commit = env.GIT_COMMIT.take(7)
+					imgTag = "build-${version_suffix}-${commit}"
 				}
 			}
 		}
-		stage("Build Docker Image for ${arch}") {
-			node(arch) {
-				script {
-					def image = docker.build("${dockerImage}:${imgTag}-${arch}")
+        stage('Build Docker Image') {
+			failFast true
+			parallel {
+				stage('Build Docker Image amd64') {
+					agent { label 'amd64' }
+					steps {
+						script {
+							images.amd64 = docker.build("${dockerImage}:${imgTag}-amd64")
+						}
+					}
 				}
-			}
-		}
-		stage("Push Docker Image for ${arch}") {
-			node(arch) {
-				script {
-					withDockerRegistry(credentialsId: 'dockernexus101') {
-						image.push()
+				stage('Build Docker Image arm64') {
+					agent { label 'arm64' }
+					steps {
+						script {
+							images.arm64 = docker.build("${dockerImage}:${imgTag}-arm64")
+						}
 					}
 				}
 			}
 		}
-	}
-}
-def parallelStageMap = agents.collectEntries { arch -> [arch, generateDockerStage(arch)] }
-
-pipeline {
-	agent none
-    stages {
-        stage('Build and push Docker Image') {
+		
+		stage('Push Docker Image') {
 			failFast true
-			steps {
-				script {
-					parallel parallelStageMap
+			parallel {
+				stage('Push Docker Image amd64') {
+					agent { label 'amd64' }
+					steps {
+						script {
+							withDockerRegistry(credentialsId: 'dockernexus101') {
+								images.amd64.push()
+							}
+						}
+					}
+				}
+				stage('Push Docker Image arm64') {
+					agent { label 'arm64' }
+					steps {
+						script {
+							withDockerRegistry(credentialsId: 'dockernexus101') {
+								images.arm64.push()
+							}
+						}
+					}
 				}
 			}
         }
@@ -48,14 +66,10 @@ pipeline {
 			agent { label 'amd64' }
             steps {
 				script {
-					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-					imgTag = "build-${version_suffix}-${commit}"
 					withDockerRegistry(credentialsId: 'dockernexus101') {
 						sh "docker manifest create ${dockerImage}:${imgTag}"
-						agents.each { arch ->
-							sh "docker manifest annotate ${dockerImage}:${imgTag} $dockerImage:${imgTag}-${arch} --os linux --arch ${arch}"
-						}
+						sh "docker manifest annotate ${dockerImage}:${imgTag} $dockerImage:${imgTag}-amd64 --os linux --arch amd64"
+						sh "docker manifest annotate ${dockerImage}:${imgTag} $dockerImage:${imgTag}-arm64 --os linux --arch arm64"
 						sh "docker manifest push ${dockerImage}:${imgTag}"
 					}
 				}
