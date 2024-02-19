@@ -9,14 +9,17 @@ pipeline {
 		stage('Git checkout') {
 			steps {
 				checkout scm
+				script {
+					version_suffix = '-' + $BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase()
+					$IMAGE_TAG = "build-$version_suffix-$GIT_COMMIT"
+				}
 			}
 		}
         stage('Build Docker Image') {
             steps {
 				script {
-					image = docker.build("$DOCKER_IMAGE:build-$BRANCH_NAME-$GIT_COMMIT")
+					image = docker.build("$DOCKER_IMAGE:$IMAGE_TAG")
 				}
-                println "💩Docker Image: ${DOCKER_IMAGE}:build-$BRANCH_NAME-$GIT_COMMIT"
             }
         }
 
