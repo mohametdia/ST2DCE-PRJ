@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'arm64' }
 
     environment {
         DOCKER_IMAGE = 'dockernexus101/app01'
