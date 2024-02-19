@@ -5,18 +5,11 @@ def generateDockerStage(arch) {
 		stage("Build and push Docker Image for $arch") {
 			agent { label arch }
 			stages {
-				stage('Checkout') {
-					steps {
-						script {
-							checkout scm
-							version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-							imgTag = "build-$version_suffix-$GIT_COMMIT"
-						}
-					}
-				}
 				stage('Build Docker Image') {
 					steps {
 						script {
+							version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+							imgTag = "build-$version_suffix-$GIT_COMMIT"
 							image = docker.build("$dockerImage:$imgTag-$arch")
 						}
 					}
