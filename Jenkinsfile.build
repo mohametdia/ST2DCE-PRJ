@@ -6,16 +6,16 @@ def generateDockerStage(arch) {
 			node(arch) {
 				script {
 					checkout scm
-					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-					imgTag = "build-${version_suffix}-${commit}"
+					def version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+					def imgTag = "build-${version_suffix}-${commit}"
 				}
 			}
 		}
 		stage("Build Docker Image for ${arch}") {
 			node(arch) {
 				script {
-					image = docker.build("${dockerImage}:${imgTag}-${arch}")
+					def image = docker.build("${dockerImage}:${imgTag}-${arch}")
 				}
 			}
 		}
