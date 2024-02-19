@@ -2,23 +2,21 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REPO = 'dockernexus101/app01'
+        DOCKER_IMAGE = 'dockernexus101/app01'
     }
 
     stages {
 		stage('Git checkout') {
 			steps {
 				checkout scm
-				script {
-					env.IMAGE = "$DOCKER_REPO:build-$BRANCH_NAME-$GIT_COMMIT"
-				}
 			}
 		}
         stage('Build Docker Image') {
             steps {
-				sh """
-					docker buildx build --platform linux/arm64,linux/amd64 -t $IMAGE .
-				"""
+				script {
+					image = docker.build("$DOCKER_IMAGE:build-$BRANCH_NAME-$GIT_COMMIT")
+				}
+                println "💩Docker Image: ${DOCKER_IMAGE}:build-$BRANCH_NAME-$GIT_COMMIT"
             }
         }
 
@@ -26,9 +24,7 @@ pipeline {
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh """
-							docker push $IMAGE
-						"""
+						image.push()
 					}
 				}
             }
