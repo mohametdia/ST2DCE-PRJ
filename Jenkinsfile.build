@@ -1,4 +1,4 @@
-def dockerImage = 'dockernexus101/app01'
+dockerImage = 'dockernexus101/app01'
 def agents = ['amd64', 'arm64']
 def generateDockerStage(arch) {
 	return {
@@ -14,7 +14,7 @@ def generateDockerStage(arch) {
 		stage("Build Docker Image for $arch") {
 			node(arch) {
 				script {
-					image = docker.build("$dockerImage:$imgTag-$arch")
+					image = docker.build("${dockerImage}:$imgTag-$arch")
 				}
 			}
 		}
@@ -50,11 +50,11 @@ pipeline {
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					imgTag = "build-$version_suffix-$env.GIT_COMMIT"
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh "docker manifest create $dockerImage:$imgTag"
+						sh "docker manifest create ${dockerImage}:$imgTag"
 						agents.each { arch ->
-							sh "docker manifest annotate $dockerImage:$imgTag $dockerImage:$imgTag-$arch --os linux --arch $arch"
+							sh "docker manifest annotate ${dockerImage}:$imgTag $dockerImage:$imgTag-$arch --os linux --arch $arch"
 						}
-						sh "docker manifest push $dockerImage:$imgTag"
+						sh "docker manifest push ${dockerImage}:$imgTag"
 					}
 				}
             }
