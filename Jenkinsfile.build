@@ -2,11 +2,18 @@ def dockerImage = 'dockernexus101/app01'
 def agents = ['amd64', 'arm64']
 def generateDockerStage(arch) {
 	return {
+		stage("Checkout source code for $arch") {
+			node(arch) {
+				script {
+					checkout scm
+					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					imgTag = "build-$version_suffix-$GIT_COMMIT"
+				}
+			}
+		}
 		stage("Build Docker Image for $arch") {
 			node(arch) {
 				script {
-					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					imgTag = "build-$version_suffix-$GIT_COMMIT"
 					image = docker.build("$dockerImage:$imgTag-$arch")
 				}
 			}
