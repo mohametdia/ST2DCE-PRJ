@@ -2,6 +2,9 @@ dockerImage = 'dockernexus101/app01'
 
 pipeline {
 	agent { label 'arm64' }
+	options {
+		parallelsAlwaysFailFast()
+	}
     stages {
 		stage('Git Checkout') {
 			steps {
@@ -19,7 +22,6 @@ pipeline {
 			}
 		}
         stage('Build Docker Image') {
-			failFast true
 			parallel {
 				stage('Build Docker Image amd64') {
 					agent { label 'amd64' }
@@ -41,7 +43,6 @@ pipeline {
 		}
 		
 		stage('Push Docker Image') {
-			failFast true
 			parallel {
 				stage('Push Docker Image amd64') {
 					agent { label 'amd64' }
