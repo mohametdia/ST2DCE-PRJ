@@ -1,0 +1,36 @@
+pipeline {
+    agent { label 'amd64' }
+
+    environment {
+        DOCKER_IMAGE = 'dockernexus101/app01'
+    }
+
+    stages {
+		stage('Git checkout') {
+			steps {
+				checkout scm
+				script {
+					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					env.IMAGE_TAG = "build-$version_suffix-$GIT_COMMIT"
+				}
+			}
+		}
+        stage('Build Docker Image') {
+            steps {
+				script {
+					image = docker.build("$DOCKER_IMAGE:$IMAGE_TAG")
+				}
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+				script {
+					withDockerRegistry(credentialsId: 'dockernexus101') {
+						image.push()
+					}
+				}
+            }
+        }
+    }
+}
