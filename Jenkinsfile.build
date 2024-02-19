@@ -10,8 +10,8 @@ pipeline {
 			steps {
 				checkout scm
 				script {
-					version_suffix = '-' + $BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase()
-					$IMAGE_TAG = "build-$version_suffix-$GIT_COMMIT"
+					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					env.IMAGE_TAG = "build-$version_suffix-$GIT_COMMIT"
 				}
 			}
 		}
