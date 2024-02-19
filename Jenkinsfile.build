@@ -1,7 +1,7 @@
 dockerImage = 'dockernexus101/app01'
 
 pipeline {
-	agent { label 'amd64' }
+	agent { label 'arm64' }
     stages {
 		stage('Git Checkout') {
 			steps {
@@ -9,7 +9,12 @@ pipeline {
 					checkout scm
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					commit = env.GIT_COMMIT.take(7)
-					imgTag = "build-${version_suffix}-${commit}"
+					version = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
+					buildNumber = ''
+					if (env.BRANCH_NAME != 'main') {
+						buildNumber = "${version_suffix}-${commit}"
+					}
+					imgTag = "${version}${buildNumber}"
 				}
 			}
 		}
@@ -62,7 +67,7 @@ pipeline {
         }
 
         stage('Build Docker manifest and push') {
-			agent { label 'amd64' }
+			agent { label 'arm64' }
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
