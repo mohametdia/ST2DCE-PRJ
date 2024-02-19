@@ -10,14 +10,14 @@ pipeline {
 			steps {
 				script {
 					checkout scm
-					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					branchName = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					commit = env.GIT_COMMIT.take(7)
-					version = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
-					buildNumber = ''
+					imgTag = ''
 					if (env.BRANCH_NAME != 'main') {
-						buildNumber = "${version_suffix}-${commit}"
+						imgTag = "${branchName}-${commit}"
+					} else {
+						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 					}
-					imgTag = "${version}${buildNumber}"
 				}
 			}
 		}
