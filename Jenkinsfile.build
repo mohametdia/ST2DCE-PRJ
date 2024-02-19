@@ -1,5 +1,4 @@
 dockerImage = 'dockernexus101/app01'
-images = [:]
 
 pipeline {
 	agent { label 'amd64' }
@@ -21,7 +20,7 @@ pipeline {
 					agent { label 'amd64' }
 					steps {
 						script {
-							images.amd64 = docker.build("${dockerImage}:${imgTag}-amd64")
+							imageamd64 = docker.build("${dockerImage}:${imgTag}-amd64")
 						}
 					}
 				}
@@ -29,7 +28,7 @@ pipeline {
 					agent { label 'arm64' }
 					steps {
 						script {
-							images.arm64 = docker.build("${dockerImage}:${imgTag}-arm64")
+							imagearm64 = docker.build("${dockerImage}:${imgTag}-arm64")
 						}
 					}
 				}
@@ -44,7 +43,7 @@ pipeline {
 					steps {
 						script {
 							withDockerRegistry(credentialsId: 'dockernexus101') {
-								images.amd64.push()
+								imageamd64.push()
 							}
 						}
 					}
@@ -54,7 +53,7 @@ pipeline {
 					steps {
 						script {
 							withDockerRegistry(credentialsId: 'dockernexus101') {
-								images.arm64.push()
+								imagearm64.push()
 							}
 						}
 					}
@@ -67,9 +66,7 @@ pipeline {
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh "docker manifest create ${dockerImage}:${imgTag}"
-						sh "docker manifest annotate ${dockerImage}:${imgTag} $dockerImage:${imgTag}-amd64 --os linux --arch amd64"
-						sh "docker manifest annotate ${dockerImage}:${imgTag} $dockerImage:${imgTag}-arm64 --os linux --arch arm64"
+						sh "docker manifest create ${dockerImage}:${imgTag} ${dockerImage}:${imgTag}-amd64 ${dockerImage}:${imgTag}-arm64"
 						sh "docker manifest push ${dockerImage}:${imgTag}"
 					}
 				}
