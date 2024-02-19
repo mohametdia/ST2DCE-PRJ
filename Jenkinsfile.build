@@ -7,9 +7,11 @@ def generateDockerStage(arch) {
 			stages {
 				stage('Checkout') {
 					steps {
-						checkout scm
-						version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-						imgTag = "build-$version_suffix-$GIT_COMMIT"
+						script {
+							checkout scm
+							version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+							imgTag = "build-$version_suffix-$GIT_COMMIT"
+						}
 					}
 				}
 				stage('Build Docker Image') {
@@ -38,6 +40,7 @@ pipeline {
 	agent { label 'amd64' }
     stages {
         stage('Build and push Docker Image') {
+			failFast true
 			steps {
 				script {
 					parallel parallelStageMap
