@@ -8,6 +8,7 @@ def generateDockerStage(arch) {
 					checkout scm
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
 					imgTag = "build-${version_suffix}-$env.GIT_COMMIT"
+					echo "Building Docker Image for ${arch} with tag ${imgTag}"
 				}
 			}
 		}
