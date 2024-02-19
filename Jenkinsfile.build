@@ -7,7 +7,7 @@ def generateDockerStage(arch) {
 				script {
 					checkout scm
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					imgTag = "build-$version_suffix-$GIT_COMMIT"
+					imgTag = "build-$version_suffix-$env.GIT_COMMIT"
 				}
 			}
 		}
@@ -48,7 +48,7 @@ pipeline {
             steps {
 				script {
 					version_suffix = '-' + env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
-					imgTag = "build-$version_suffix-$GIT_COMMIT"
+					imgTag = "build-$version_suffix-$env.GIT_COMMIT"
 					withDockerRegistry(credentialsId: 'dockernexus101') {
 						sh "docker manifest create $dockerImage:$imgTag"
 						agents.each { arch ->
