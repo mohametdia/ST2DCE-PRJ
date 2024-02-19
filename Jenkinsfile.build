@@ -14,9 +14,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
 				script {
-					image = docker.build("$DOCKER_IMAGE:build-$GIT_COMMIT")
+					image = docker.build("$DOCKER_IMAGE:build-$BRANCH_NAME-$GIT_COMMIT")
 				}
-                println "💩Docker Image: ${DOCKER_IMAGE}:build-$GIT_COMMIT"
+                println "💩Docker Image: ${DOCKER_IMAGE}:build-$BRANCH_NAME-$GIT_COMMIT"
             }
         }
 
