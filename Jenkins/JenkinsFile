@@ -2,34 +2,58 @@ pipeline {
 
 agent any
 
-    stage('Build Docker Image') {
-        steps {
-            script {
-                dockerImage = docker.build("ST2DCE:${env.BUILD_ID}", "-f DockerFile ./")
+    environment {
+        IMAGE_NAME = 'docker-hub-username/st2dce'
+        DOCKER_CREDENTIALS= 'docker-hub-credentials'
+        DOCKER_REGISTRY= 'https://registry.hub.docker.com'
+    }
+
+    stages {
+        stage('Clone repository') {
+            steps {
+                git branch: 'jenkins-pipeline', url: 'https://github.com/Bllopp/ST2DCE-PRJ.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "-f DockerFile Dockerfile")
+            }
+        }
+
+        stage('Publishing Image on Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry("${DOCKER_REGISTRY}", "${DOCKER_CREDENTIALS}") {
+                        dockerImage.push("${env.BUILD_ID}")
+                        dockerImage.push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes - Dev') {
+            steps {
+                script {
+                    sh "sed -i 's|${IMAGE_NAME}:${BUILD_ID}|'${env.IMAGE_NAME}:${env.BUILD_ID}'|g' Jenkins/dev-deployment.yaml"
+                    sh "kubectl apply -f Jenkins/dev-deployment.yaml"
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes - Prod') {
+            steps {
+                script {
+                    sh "sed -i 's|${IMAGE_NAME}:latest|'${env.IMAGE_NAME}:latest'|g' ./prod-deployment.yaml"
+                    sh "kubectl apply -f ./prod-deployment.yaml"
+                }
+            }
+        }
+
+        stage('Testing the application'){
+            steps {
+                sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
             }
         }
     }
-
-    stage('Create development container in minikube') {
-        steps {
-            sh 'kubectl apply -f dev-deployment.yaml'
-        }
-    }
-
-    stage('Testing the application'){
-        steps {
-            sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
-        }
-    }
-
-    stage('Publishing Image on Docker Hub'){
-        steps{
-            script {
-                
-            }
-        }
-    }
-
-    stage('Creat')
-
 }
