@@ -1,11 +1,11 @@
 pipeline {
 
-agent any
+    agent {
+        label 'kubeagent'
+    }
 
     environment {
-        IMAGE_NAME = 'docker-hub-username/st2dce'
-        DOCKER_CREDENTIALS= 'docker-hub-credentials'
-        DOCKER_REGISTRY= 'https://registry.hub.docker.com'
+        DOCKER_TAG = "st2dce:$BUILD_NUMBER"
     }
 
     stages {
@@ -17,16 +17,18 @@ agent any
 
         stage('Build Docker Image') {
             steps {
-                dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "-f DockerFile Dockerfile")
+                script {
+                    def appVersion = '0.0.1-SNAPSHOT'
+                    def dockerImage = docker.build("sabrinam2/st2dce:${appVersion}")
+                }
             }
         }
 
         stage('Publishing Image on Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry("${DOCKER_REGISTRY}", "${DOCKER_CREDENTIALS}") {
-                        dockerImage.push("${env.BUILD_ID}")
-                        dockerImage.push('latest')
+                    docker.withRegistry('https://registry.hub.docker.com', 'DockerHubCredentials') {
+                        dockerImage.push("${appVersion}")
                     }
                 }
             }
@@ -35,8 +37,7 @@ agent any
         stage('Deploy to Kubernetes - Dev') {
             steps {
                 script {
-                    sh "sed -i 's|${IMAGE_NAME}:${BUILD_ID}|'${env.IMAGE_NAME}:${env.BUILD_ID}'|g' Jenkins/dev-deployment.yaml"
-                    sh "kubectl apply -f Jenkins/dev-deployment.yaml"
+                    sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
                 }
             }
         }
@@ -44,15 +45,16 @@ agent any
         stage('Deploy to Kubernetes - Prod') {
             steps {
                 script {
-                    sh "sed -i 's|${IMAGE_NAME}:latest|'${env.IMAGE_NAME}:latest'|g' ./prod-deployment.yaml"
-                    sh "kubectl apply -f ./prod-deployment.yaml"
+                    sh 'kubectl apply -f prod-deployment.yaml'
                 }
             }
         }
 
         stage('Testing the application'){
             steps {
-                sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
+                script {
+                    sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
+                }
             }
         }
     }
