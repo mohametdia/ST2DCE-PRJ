@@ -32,7 +32,7 @@ metadata:
   namespace: production
 spec:
   selector:
-    app: st2dce-prod
+    app: st2dce
   ports:
     - protocol: TCP
       port: 80
