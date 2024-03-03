@@ -1,20 +1,18 @@
-# Use the latest Jenkins LTS image
+# Utilisez l'image officielle Jenkins LTS comme base
 FROM jenkins/jenkins:lts
 
-# Switch to root to install Docker
+# Passage à l'utilisateur root pour installer les paquets nécessaires
 USER root
 
-# Install Docker CLI using the official Docker installation script
-RUN curl -fsSL https://get.docker.com/ | sh
+# Installation de Docker CLI
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-20.10.9.tgz \
+    && tar xzvf docker-20.10.9.tgz --strip 1 \
+       -C /usr/local/bin docker/docker \
+    && rm docker-20.10.9.tgz
 
-# Add Jenkins user to the Docker group
-RUN usermod -a -G docker jenkins
+# Installation de kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
-# Switch back to the jenkins user
-USER jenkins
-
-#Installation of Jenkins plugins
-#RUN /usr/local/bin/install-plugins.sh kubernetes workflow-aggregator git docker-workflow credentials-binding
-
-#Jenkins launch
-ENTRYPOINT ["tini", "--", "/usr/local/bin/jenkins.sh"]
+# Utilisation de jenkins-plugin-cli pour installer les plugins Jenkins
+# RUN jenkins-plugin-cli --plugins docker-workflow kubernetes git blueocean

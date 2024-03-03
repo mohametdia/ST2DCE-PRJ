@@ -1,61 +1,59 @@
 pipeline {
-
-    agent {
-        label 'kubeagent'
-    }
-
+    agent any
     environment {
-        DOCKER_TAG = "st2dce:$BUILD_NUMBER"
+        DOCKER_TAG = "st2dce-${BUILD_NUMBER}"
+        APP_VERSION = '0.0.1-SNAPSHOT'
+        KUBECONFIG = '/var/run/secrets/kubernetes.io/serviceaccount/kubeconfig'
     }
-
     stages {
         stage('Clone repository') {
             steps {
                 git branch: 'jenkins-pipeline', url: 'https://github.com/Bllopp/ST2DCE-PRJ.git'
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    def appVersion = '0.0.1-SNAPSHOT'
-                    def dockerImage = docker.build("sabrinam2/st2dce:${appVersion}")
+                    dockerImage = docker.build("sabrinam2/st2dce:${APP_VERSION}")
                 }
             }
         }
-
         stage('Publishing Image on Docker Hub') {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'DockerHubCredentials') {
-                        dockerImage.push("${appVersion}")
+                        dockerImage.push("${DOCKER_TAG}")
                     }
                 }
             }
         }
-
-        stage('Deploy to Kubernetes - Dev') {
-            steps {
-                script {
-                    sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
-                }
-            }
-        }
-
         stage('Deploy to Kubernetes - Prod') {
             steps {
                 script {
-                    sh 'kubectl apply -f prod-deployment.yaml'
+                    sh 'kubectl apply -f prod-deployment.yaml --validate=false'
                 }
             }
         }
-
-        stage('Testing the application'){
+        stage('Deploy to Kubernetes - Dev') {
             steps {
                 script {
-                    sh 'curl ST2DCE.dev-namespace.svc.cluster.local:8080/'
+                    dir("Jenkins/") {
+                        sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
+                    }
                 }
             }
+        }
+        stage('Testing the application') {
+            steps {
+                script {
+                    sh 'curl http://ST2DCE.dev-namespace.svc.cluster.local:8080/'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }

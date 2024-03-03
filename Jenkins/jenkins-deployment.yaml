@@ -13,9 +13,10 @@ spec:
       labels:
         app: jenkins
     spec:
+      serviceAccountName: jenkins-admin
       containers:
         - name: jenkins
-          image: jenkins/jenkins:latest
+          image: sabrinam2/jenkins-docker:latest
           ports:
             - containerPort: 8080
           volumeMounts:
