@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: st2dce
-          image: sabrinam2/st2dce:0.0.1-SNAPSHOT
+          image: sabrinam2/st2dce:latest
           ports:
             - containerPort: 8080
 
