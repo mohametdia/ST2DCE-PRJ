@@ -1,8 +1,6 @@
 pipeline {
     agent any
     environment {
-        DOCKER_TAG = "st2dce-${BUILD_NUMBER}"
-        APP_VERSION = '0.0.1-SNAPSHOT'
         KUBECONFIG = '/var/run/secrets/kubernetes.io/serviceaccount/kubeconfig'
     }
     stages {
@@ -14,7 +12,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("sabrinam2/st2dce:${APP_VERSION}")
+                    dockerImage = docker.build("sabrinam2/st2dce:latest")
                 }
             }
         }
@@ -22,7 +20,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'DockerHubCredentials') {
-                        dockerImage.push("${DOCKER_TAG}")
+                        dockerImage.push("latest")
                     }
                 }
             }
@@ -30,23 +28,32 @@ pipeline {
         stage('Deploy to Kubernetes - Prod') {
             steps {
                 script {
-                    sh 'kubectl apply -f prod-deployment.yaml --validate=false'
+                    sh 'kubectl apply -f prod-deployment.yaml'
+                }
+            }
+        }
+        stage('Testing the application - Prod') {
+            steps {
+                script {
+                    sh "kubectl port-forward svc/st2dce-prod-service 8080:80 -n production &"
+                    sh "sleep 10"
+                    sh "curl -m 5 http://localhost:8080/"
                 }
             }
         }
         stage('Deploy to Kubernetes - Dev') {
             steps {
                 script {
-                    dir("Jenkins/") {
-                        sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
-                    }
+                    sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
                 }
             }
         }
-        stage('Testing the application') {
+        stage('Testing the application - Dev') {
             steps {
                 script {
-                    sh 'curl http://ST2DCE.dev-namespace.svc.cluster.local:8080/'
+                    sh "kubectl port-forward svc/st2dce-dev-service 8080:80 -n development &"
+                    sh "sleep 10"
+                    sh "curl -m 5 http://localhost:8080/"
                 }
             }
         }
