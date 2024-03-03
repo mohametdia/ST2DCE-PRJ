@@ -12,6 +12,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Assurez-vous que Docker est disponible et configuré ici si nécessaire
+                    // Cela peut nécessiter des configurations supplémentaires pour Docker dans Kubernetes
                     dockerImage = docker.build("sabrinam2/st2dce:latest")
                 }
             }
@@ -25,38 +27,35 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Kubernetes - Prod') {
-            steps {
-                script {
-                    sh 'kubectl apply -f prod-deployment.yaml'
-                }
-            }
-        }
-        stage('Testing the application - Prod') {
-            steps {
-                script {
-                    sh "kubectl port-forward svc/st2dce-prod-service 8080:80 -n production &"
-                    sh "sleep 10"
-                    sh "curl -m 5 http://localhost:8080/"
-                }
-            }
-        }
         stage('Deploy to Kubernetes - Dev') {
             steps {
                 script {
+                    // Utilisez le kubeconfig par défaut dans le pod Jenkins
                     sh 'kubectl apply -f Jenkins/dev-deployment.yaml'
                 }
             }
         }
-        stage('Testing the application - Dev') {
+        stage('Testing the application in dev') {
             steps {
                 script {
+                    // Port-forward the service in the background
                     sh "kubectl port-forward svc/st2dce-dev-service 8080:80 -n development &"
+                    // Wait a little bit to ensure the port-forward is established
                     sh "sleep 10"
+                    // Perform the curl test
                     sh "curl -m 5 http://localhost:8080/"
                 }
             }
         }
+        stage('Deploy to Kubernetes - Prod') {
+            steps {
+                script {
+                    // Utilisez le kubeconfig par défaut dans le pod Jenkins
+                    sh 'kubectl apply -f prod-deployment.yaml'
+                }
+            }
+        }
+
     }
     post {
         always {
